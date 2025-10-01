@@ -20,7 +20,7 @@ sdtmct_vocab <- data %>%
   pull()  # Get as a vector
 
 # Write to a text file
-output_file <- "C:/Users/KS/OneDrive/桌面/pytest/distinct_misspelled_words.txt"
+output_file <- "C:/Users/KS/OneDrive/desktop/pytest/sdtmct_vocab.txt"
 writeLines(project_vocab, output_file)
 
 # View the result
