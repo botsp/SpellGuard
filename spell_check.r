@@ -1,8 +1,9 @@
 library(shiny)
 library(openxlsx)
 library(hunspell)
+library(DT)
 
-# Function to convert (row, col) to Excel column label (e.g., (6,2) -> B6)
+# Convert (row, col) to Excel cell address, e.g. (6,2) -> B6
 cellLabel <- function(row, col) {
   label <- ""
   while (col > 0) {
@@ -13,6 +14,7 @@ cellLabel <- function(row, col) {
   paste0(label, row)
 }
 
+# Core function: spell-check over all cells, report Excel coordinates and content
 sheet_results <- function(df, sheet) {
   nrow_df <- nrow(df)
   ncol_df <- ncol(df)
@@ -21,20 +23,17 @@ sheet_results <- function(df, sheet) {
   for (row in seq_len(nrow_df)) {
     for (col in seq_len(ncol_df)) {
       val <- as.character(df[row, col])
-      # Only check cells that are not blank and contain letters
+      # Only spell-check cells with non-blank content containing letters
       if (!is.na(val) && nchar(trimws(val)) > 0 && grepl("[a-zA-Z]", val)) {
         miss <- hunspell(val)[[1]]
         if (length(miss) > 0) {
-          excel_cell <- cellLabel(row, col) # Excel's true row/col
+          excel_cell <- cellLabel(row, col)
           results[[length(results) + 1]] <- data.frame(
             ID = paste0(sheet, "_", excel_cell),
             Sheet = sheet,
-            Row = row,
-            Col = col,
-            Cell = excel_cell,         # Excel "address" like B6
+            Cell = excel_cell,
             OriginalText = val,
             MisspelledWords = paste(miss, collapse = "; "),
-            ExcelRef = paste0(sheet, "!", excel_cell),
             stringsAsFactors = FALSE
           )
         }
@@ -46,52 +45,71 @@ sheet_results <- function(df, sheet) {
 }
 
 ui <- fluidPage(
-  titlePanel("Excel Spell Checker (True Excel Cell Coordinates)"),
+  titlePanel("SpellGuard"),
   sidebarLayout(
     sidebarPanel(
       fileInput("file", "Upload Excel File (.xlsx)"),
-      downloadButton("download", "Download Spell Check Results")
+      uiOutput("sheet_selector"),
+      downloadButton("download", "Download Spell Check Results"),
+      tags$div(
+        style = "font-size: 12px; color: #7d7d7d; margin-top: 10px;",
+        "Note: 'Cell' indicates the real Excel coordinate (such as B6). If the source file omits physical blank rows or columns, cell mapping may be shifted."
+      )
     ),
     mainPanel(
-      tableOutput("preview")
+      DT::dataTableOutput("preview_dt")
     )
   )
 )
 
 server <- function(input, output, session) {
-  spell_results <- reactive({
+  sheets_rv <- reactiveVal(NULL)
+  all_results_rv <- reactiveVal(NULL)
+  
+  # When a file is uploaded, extract all sheet names and run spell check for each sheet
+  observeEvent(input$file, {
     req(input$file)
     file_path <- input$file$datapath
     sheets <- getSheetNames(file_path)
+    sheets_rv(sheets)
     all_results <- lapply(sheets, function(sh) {
-      # Never skip any row or column, each cell's (row,col) matches Excel's!
+      # Load the sheet with all empty rows/columns preserved
       df <- read.xlsx(file_path, sheet = sh, colNames = FALSE, skipEmptyRows = FALSE, skipEmptyCols = FALSE)
       sheet_results(df, sh)
     })
-    results <- Filter(Negate(is.null), all_results)
-    if (length(results) == 0) {
-      data.frame(
-        ID = character(),
-        Sheet = character(),
-        Row = integer(),
-        Col = integer(),
-        Cell = character(),
-        OriginalText = character(),
-        MisspelledWords = character(),
-        ExcelRef = character(),
-        stringsAsFactors = FALSE
-      )
-    } else {
-      do.call(rbind, results)
+    # Combine all results into a single data frame
+    results_df <- do.call(rbind, Filter(Negate(is.null), all_results))
+    all_results_rv(results_df)
+    # Set the default displayed sheet as the first one
+    if (length(sheets) > 0) {
+      updateSelectInput(session, "sheet_selected", selected = sheets[[1]])
     }
   })
-  output$preview <- renderTable({
-    head(spell_results(), 10)
+  
+  # Sheet selector UI is displayed only after file upload
+  output$sheet_selector <- renderUI({
+    req(sheets_rv())
+    selectInput("sheet_selected", "Filter by sheet:", choices = sheets_rv(), selected = sheets_rv()[[1]])
   })
+  
+  # Filter results for the selected sheet only
+  filtered_sheet <- reactive({
+    results <- all_results_rv()
+    if (is.null(results)) return(data.frame())
+    if (is.null(input$sheet_selected)) return(results)
+    subset(results, Sheet == input$sheet_selected)
+  })
+  
+  # Paginated, sortable, and searchable data table in the main panel
+  output$preview_dt <- DT::renderDataTable({
+    filtered_sheet()
+  }, options = list(pageLength = 10))
+  
+  # Download filtered results as Excel file
   output$download <- downloadHandler(
     filename = function() {"spell_check_results.xlsx"},
     content = function(file) {
-      write.xlsx(spell_results(), file)
+      write.xlsx(filtered_sheet(), file)
     }
   )
 }
