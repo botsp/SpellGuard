@@ -23,3 +23,9 @@ Otherwise, there is no programmatic way to determine original, “visual” row 
 
 Conclusion:
 This limitation is inherent to Excel’s file structure, not R code or the openxlsx/readxl packages. Any solution must be addressed at the file creation or pre-processing stage, not in data reading code.
+
+## 2. Issue2
+Implemented multi-core parallel processing for spell checking across Excel sheets or row blocks using future.apply::future_lapply or parallel::mclapply. Each sheet or row block is processed independently on separate cores, with the main thread aggregating results. This approach significantly enhances performance for large datasets by distributing computational load, maintaining scalability, and ensuring efficient spell checking with minimal overhead.
+
+With a free Posit Cloud account limited to 1 CPU and 1GB of memory, there are no additional cores available for true parallel processing. Even when using future.apply::future_lapply or parallel::mclapply, the tasks will not run in parallel but instead execute sequentially due to the single-core limitation. The system may simulate concurrency by switching between tasks (e.g., across different sessions), but this is effectively "fake concurrency" with no actual parallel execution.
+
