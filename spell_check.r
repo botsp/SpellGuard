@@ -26,7 +26,6 @@ sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character(
   nrow_df <- nrow(df)
   ncol_df <- ncol(df)
   if (nrow_df == 0 || ncol_df == 0) return(NULL)
-  
   cell_map <- list()
   cell_idx <- 0
   # 1: Map each cell to list of words (both original and lower-case)
@@ -45,8 +44,8 @@ sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character(
             cell = cellLabel(row, col),
             Sheet = sheet,
             OriginalText = val,
-            Words_orig = check_words,        # original-cased words
-            Words_lower = check_words_lower  # lower-case for spellcheck
+            Words_orig = check_words,         # original-cased words
+            Words_lower = check_words_lower   # lower-case for spellcheck
           )
         }
       }
@@ -105,6 +104,9 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
+  # Hard-coded internal vocabulary whitelist (auto-included)
+  project_vocab <- c("Takeda", "ADaM", "aCRF", "Num", "Codelist", "TypeODM","Timepoint")
+  
   sheets_rv <- reactiveVal(NULL)
   results_list_rv <- reactiveVal(NULL)
   
@@ -115,8 +117,10 @@ server <- function(input, output, session) {
     if (length(sheets) > 0) {
       updateSelectInput(session, "sheet_selected", choices = sheets, selected = sheets[[1]])
     }
-    whitelist <- unique(tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+"))))
-    whitelist <- whitelist[nzchar(whitelist)]
+    # Combine internal and user-provided whitelists
+    user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
+    user_whitelist <- user_whitelist[nzchar(user_whitelist)]
+    whitelist <- unique(c(tolower(project_vocab), user_whitelist))
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
         setProgress(i / length(sheets), detail = paste("Processing sheet:", sheets[i]))
@@ -133,8 +137,9 @@ server <- function(input, output, session) {
     file_path <- input$file$datapath
     sheets <- sheets_rv()
     if (is.null(sheets)) return()
-    whitelist <- unique(tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+"))))
-    whitelist <- whitelist[nzchar(whitelist)]
+    user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
+    user_whitelist <- user_whitelist[nzchar(user_whitelist)]
+    whitelist <- unique(c(tolower(project_vocab), user_whitelist))
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
         setProgress(i / length(sheets), detail = paste("Processing sheet:", sheets[i]))
