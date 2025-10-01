@@ -2,6 +2,7 @@ library(shiny)
 library(openxlsx)
 library(hunspell)
 
+# Function to convert (row, col) to Excel column label (e.g., (6,2) -> B6)
 cellLabel <- function(row, col) {
   label <- ""
   while (col > 0) {
@@ -16,21 +17,21 @@ sheet_results <- function(df, sheet) {
   nrow_df <- nrow(df)
   ncol_df <- ncol(df)
   if (nrow_df == 0 || ncol_df == 0) return(NULL)
-  
   results <- list()
   for (row in seq_len(nrow_df)) {
     for (col in seq_len(ncol_df)) {
       val <- as.character(df[row, col])
+      # Only check cells that are not blank and contain letters
       if (!is.na(val) && nchar(trimws(val)) > 0 && grepl("[a-zA-Z]", val)) {
         miss <- hunspell(val)[[1]]
         if (length(miss) > 0) {
-          excel_cell <- cellLabel(row, col) # row = Excel row #
+          excel_cell <- cellLabel(row, col) # Excel's true row/col
           results[[length(results) + 1]] <- data.frame(
             ID = paste0(sheet, "_", excel_cell),
             Sheet = sheet,
             Row = row,
             Col = col,
-            Cell = excel_cell,
+            Cell = excel_cell,         # Excel "address" like B6
             OriginalText = val,
             MisspelledWords = paste(miss, collapse = "; "),
             ExcelRef = paste0(sheet, "!", excel_cell),
@@ -45,7 +46,7 @@ sheet_results <- function(df, sheet) {
 }
 
 ui <- fluidPage(
-  titlePanel("Excel Spell Checker (Preserve True Row/Col Address)"),
+  titlePanel("Excel Spell Checker (True Excel Cell Coordinates)"),
   sidebarLayout(
     sidebarPanel(
       fileInput("file", "Upload Excel File (.xlsx)"),
@@ -63,7 +64,7 @@ server <- function(input, output, session) {
     file_path <- input$file$datapath
     sheets <- getSheetNames(file_path)
     all_results <- lapply(sheets, function(sh) {
-      # Preserve all structure and blank/empty cells
+      # Never skip any row or column, each cell's (row,col) matches Excel's!
       df <- read.xlsx(file_path, sheet = sh, colNames = FALSE, skipEmptyRows = FALSE, skipEmptyCols = FALSE)
       sheet_results(df, sh)
     })
