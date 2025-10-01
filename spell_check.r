@@ -1,18 +1,13 @@
 library(shiny)
-library(readxl)
 library(openxlsx)
 library(hunspell)
 
-# Return Excel-style cell address like "B6"
 cellLabel <- function(row, col) {
-  if (length(row) != 1 || length(col) != 1) stop("Arguments must be scalar")
-  if (col < 1) stop("Column number should be >= 1")
   label <- ""
-  tmp_col <- col
-  while (tmp_col > 0) {
-    rem <- (tmp_col - 1) %% 26
+  while (col > 0) {
+    rem <- (col - 1) %% 26
     label <- paste0(LETTERS[rem + 1], label)
-    tmp_col <- (tmp_col - rem - 1) %/% 26
+    col <- (col - rem - 1) %/% 26
   }
   paste0(label, row)
 }
@@ -22,48 +17,35 @@ sheet_results <- function(df, sheet) {
   ncol_df <- ncol(df)
   if (nrow_df == 0 || ncol_df == 0) return(NULL)
   
-  # Construct original mapping for all cells
-  row_idx <- seq_len(nrow_df)
-  col_idx <- seq_len(ncol_df)
-  coord <- expand.grid(Row = row_idx, Col = col_idx)
-  # as.matrix flattens by columns: A1, A2, ..., B1, B2, ...
-  coord$Text <- as.character(as.matrix(df))
-  coord$Sheet <- sheet
-  coord$Cell <- mapply(cellLabel, coord$Row, coord$Col)
-  
-  # Only keep which cells need spell check (but mapping is always to original!)
-  keep_idx <- which(
-    !is.na(coord$Text) &
-      nchar(trimws(coord$Text)) > 0 &
-      grepl("[a-zA-Z]", coord$Text)
-  )
-  if (length(keep_idx) == 0) return(NULL)
-  miss_list <- hunspell(coord$Text[keep_idx])
-  
-  rows_out <- list()
-  for (j in seq_along(miss_list)) {
-    miss <- miss_list[[j]]
-    orig_idx <- keep_idx[j]
-    if (length(miss) > 0) {
-      rows_out[[length(rows_out) + 1]] <- data.frame(
-        ID = paste0(coord$Sheet[orig_idx], "_", coord$Cell[orig_idx]),
-        Sheet = as.character(coord$Sheet[orig_idx]),
-        Row = as.integer(coord$Row[orig_idx]),
-        Col = as.integer(coord$Col[orig_idx]),
-        Cell = as.character(coord$Cell[orig_idx]),
-        OriginalText = as.character(coord$Text[orig_idx]),
-        MisspelledWords = as.character(paste(miss, collapse = "; ")),
-        ExcelRef = paste0(coord$Sheet[orig_idx], "!", coord$Cell[orig_idx]),
-        stringsAsFactors = FALSE
-      )
+  results <- list()
+  for (row in seq_len(nrow_df)) {
+    for (col in seq_len(ncol_df)) {
+      val <- as.character(df[row, col])
+      if (!is.na(val) && nchar(trimws(val)) > 0 && grepl("[a-zA-Z]", val)) {
+        miss <- hunspell(val)[[1]]
+        if (length(miss) > 0) {
+          excel_cell <- cellLabel(row, col) # row = Excel row #
+          results[[length(results) + 1]] <- data.frame(
+            ID = paste0(sheet, "_", excel_cell),
+            Sheet = sheet,
+            Row = row,
+            Col = col,
+            Cell = excel_cell,
+            OriginalText = val,
+            MisspelledWords = paste(miss, collapse = "; "),
+            ExcelRef = paste0(sheet, "!", excel_cell),
+            stringsAsFactors = FALSE
+          )
+        }
+      }
     }
   }
-  if (length(rows_out) == 0) return(NULL)
-  do.call(rbind, rows_out)
+  if (length(results) == 0) return(NULL)
+  do.call(rbind, results)
 }
 
 ui <- fluidPage(
-  titlePanel("Excel Spell Checker (Original Cell Mapping)"),
+  titlePanel("Excel Spell Checker (Preserve True Row/Col Address)"),
   sidebarLayout(
     sidebarPanel(
       fileInput("file", "Upload Excel File (.xlsx)"),
@@ -79,9 +61,10 @@ server <- function(input, output, session) {
   spell_results <- reactive({
     req(input$file)
     file_path <- input$file$datapath
-    sheets <- excel_sheets(file_path)
+    sheets <- getSheetNames(file_path)
     all_results <- lapply(sheets, function(sh) {
-      df <- read_excel(file_path, sheet = sh)
+      # Preserve all structure and blank/empty cells
+      df <- read.xlsx(file_path, sheet = sh, colNames = FALSE, skipEmptyRows = FALSE, skipEmptyCols = FALSE)
       sheet_results(df, sh)
     })
     results <- Filter(Negate(is.null), all_results)
