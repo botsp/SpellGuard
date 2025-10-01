@@ -21,45 +21,58 @@ is_all_upper_word <- function(word) {
   nzchar(txt) && txt == toupper(txt)
 }
 
-# Spell-check for one Excel sheet
+# Spell check using batch+unique, returning misspelled words in original casing/form
 sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character()) {
   nrow_df <- nrow(df)
   ncol_df <- ncol(df)
   if (nrow_df == 0 || ncol_df == 0) return(NULL)
-  results <- list()
+  
+  cell_map <- list()
+  cell_idx <- 0
+  # 1: Map each cell to list of words (both original and lower-case)
   for (row in seq_len(nrow_df)) {
     for (col in seq_len(ncol_df)) {
       val <- as.character(df[row, col])
-      # Skip empty or non-alphabetic cells
       if (!is.na(val) && nchar(trimws(val)) > 0 && grepl("[a-zA-Z]", val)) {
-        # Split cell into words (includes letter, number, ' and -)
         words <- unlist(str_extract_all(val, "\\b[\\w'-]+\\b"))
-        # Optionally ignore ALL UPPER words per user setting
-        check_words <- if (ignore_upper) {
-          words[!sapply(words, is_all_upper_word)]
-        } else {
-          words
-        }
-        # Remove whitelist words in a case-insensitive way
-        check_words <- check_words[!tolower(check_words) %in% whitelist]
-        # Continue if there are words to check
+        check_words <- if (ignore_upper) words[!sapply(words, is_all_upper_word)] else words
+        keep_idx <- !tolower(check_words) %in% whitelist
+        check_words <- check_words[keep_idx]
+        check_words_lower <- tolower(check_words)
         if (length(check_words) > 0) {
-          misspelled <- unique(unlist(hunspell(check_words)))
-          # Also remove whitelist words from results
-          misspelled <- setdiff(misspelled, whitelist)
-          if (length(misspelled) > 0) {
-            excel_cell <- cellLabel(row, col)
-            results[[length(results) + 1]] <- data.frame(
-              ID = paste0(sheet, "_", excel_cell),
-              Sheet = sheet,
-              Cell = excel_cell,
-              OriginalText = val,
-              MisspelledWords = paste(misspelled, collapse = "; "),
-              stringsAsFactors = FALSE
-            )
-          }
+          cell_idx <- cell_idx + 1
+          cell_map[[cell_idx]] <- list(
+            cell = cellLabel(row, col),
+            Sheet = sheet,
+            OriginalText = val,
+            Words_orig = check_words,        # original-cased words
+            Words_lower = check_words_lower  # lower-case for spellcheck
+          )
         }
       }
+    }
+  }
+  # 2: Outer unique batch spell check
+  if (cell_idx == 0) return(NULL)
+  words_vec <- unique(unlist(lapply(cell_map, function(x) x$Words_lower)))
+  all_misspelled <- unique(unlist(hunspell(words_vec)))
+  if (length(all_misspelled) == 0) return(NULL)
+  # 3: For each cell, return only those misspelled words (in original spelling)
+  results <- list()
+  idx <- 1
+  for (item in cell_map) {
+    match_idx <- which(item$Words_lower %in% all_misspelled)
+    miss <- item$Words_orig[match_idx]
+    if (length(miss) > 0) {
+      results[[idx]] <- data.frame(
+        ID = paste0(item$Sheet, "_", item$cell),
+        Sheet = item$Sheet,
+        Cell = item$cell,
+        OriginalText = item$OriginalText,
+        MisspelledWords = paste(miss, collapse = "; "),
+        stringsAsFactors = FALSE
+      )
+      idx <- idx + 1
     }
   }
   if (length(results) == 0) return(NULL)
@@ -71,18 +84,17 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       fileInput("file", "Upload Excel File (.xlsx)"),
-      checkboxInput("ignore_uppercase", label = "Ignore ALL UPPERCASE words", value = TRUE),
+      checkboxInput("ignore_uppercase", label = "Ignore all fully capitalized words.", value = TRUE),
       uiOutput("sheet_selector"),
       textAreaInput(
         "whitelist_words",
         label = "Whitelist Words (one per line, comma, space or semicolon separated):",
-        value = "",
-        rows = 2
+        value = "", rows = 2
       ),
       downloadButton("download", "Download Spell Check Results"),
       tags$div(
         style = "font-size: 12px; color: #7d7d7d; margin-top: 10px;",
-        "Note: 'Cell' indicates the true Excel coordinate (such as B6). If the source file omits physical blank rows or columns, cell mapping may be shifted."
+        "Note: The row number identified here starts from the first non-empty row."
       )
     ),
     mainPanel(
@@ -96,7 +108,6 @@ server <- function(input, output, session) {
   sheets_rv <- reactiveVal(NULL)
   results_list_rv <- reactiveVal(NULL)
   
-  # On file upload, run spell-check for all sheets and store as a named list
   observeEvent(input$file, {
     file_path <- input$file$datapath
     sheets <- getSheetNames(file_path)
@@ -106,15 +117,17 @@ server <- function(input, output, session) {
     }
     whitelist <- unique(tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+"))))
     whitelist <- whitelist[nzchar(whitelist)]
-    res_list <- lapply(sheets, function(sh) {
-      df <- read.xlsx(file_path, sheet = sh, colNames = FALSE, skipEmptyRows = FALSE, skipEmptyCols = FALSE)
-      sheet_results(df, sh, ignore_upper = input$ignore_uppercase, whitelist = whitelist)
+    withProgress(message = "Spell-checking all sheets...", value = 0, {
+      res_list <- lapply(seq_along(sheets), function(i) {
+        setProgress(i / length(sheets), detail = paste("Processing sheet:", sheets[i]))
+        df <- read.xlsx(file_path, sheet = sheets[i], colNames = FALSE, skipEmptyRows = FALSE, skipEmptyCols = FALSE)
+        sheet_results(df, sheets[i], ignore_upper = input$ignore_uppercase, whitelist = whitelist)
+      })
+      names(res_list) <- sheets
+      results_list_rv(res_list)
     })
-    names(res_list) <- sheets
-    results_list_rv(res_list)
   })
   
-  # Re-check all sheets if "ignore uppercase" or whitelist changes
   observeEvent(list(input$ignore_uppercase, input$whitelist_words), {
     req(input$file)
     file_path <- input$file$datapath
@@ -122,21 +135,22 @@ server <- function(input, output, session) {
     if (is.null(sheets)) return()
     whitelist <- unique(tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+"))))
     whitelist <- whitelist[nzchar(whitelist)]
-    res_list <- lapply(sheets, function(sh) {
-      df <- read.xlsx(file_path, sheet = sh, colNames = FALSE, skipEmptyRows = FALSE, skipEmptyCols = FALSE)
-      sheet_results(df, sh, ignore_upper = input$ignore_uppercase, whitelist = whitelist)
+    withProgress(message = "Spell-checking all sheets...", value = 0, {
+      res_list <- lapply(seq_along(sheets), function(i) {
+        setProgress(i / length(sheets), detail = paste("Processing sheet:", sheets[i]))
+        df <- read.xlsx(file_path, sheet = sheets[i], colNames = FALSE, skipEmptyRows = FALSE, skipEmptyCols = FALSE)
+        sheet_results(df, sheets[i], ignore_upper = input$ignore_uppercase, whitelist = whitelist)
+      })
+      names(res_list) <- sheets
+      results_list_rv(res_list)
     })
-    names(res_list) <- sheets
-    results_list_rv(res_list)
   })
   
-  # Update sheet selector for sidebar
   output$sheet_selector <- renderUI({
     req(sheets_rv())
     selectInput("sheet_selected", "Filter by sheet:", choices = sheets_rv(), selected = sheets_rv()[[1]])
   })
   
-  # Main Table: Only show results for the selected sheet
   filtered_sheet <- reactive({
     reslist <- results_list_rv()
     if (is.null(reslist) || is.null(input$sheet_selected)) return(data.frame())
@@ -149,7 +163,6 @@ server <- function(input, output, session) {
     filtered_sheet()
   }, options = list(pageLength = 10))
   
-  # Download all sheets' results as one combined Excel sheet
   output$download <- downloadHandler(
     filename = function() {"spell_check_results.xlsx"},
     content = function(file) {
