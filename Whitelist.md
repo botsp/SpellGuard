@@ -19,6 +19,10 @@ sdtmct_vocab <- data %>%
   distinct() %>%
   pull()  # Get as a vector
 
+# Write to a text file
+output_file <- "C:/Users/KS/OneDrive/桌面/pytest/distinct_misspelled_words.txt"
+writeLines(project_vocab, output_file)
+
 # View the result
 print(sdtmct_vocab)
 ````
