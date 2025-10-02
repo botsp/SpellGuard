@@ -26,3 +26,6 @@ writeLines(project_vocab, output_file)
 # View the result
 print(sdtmct_vocab)
 ````
+
+## 2. ADam CT list
+adamct_vocab <- c("ADaMIG","subscores","Vugrin", "Rostron", "Verzi", "Brodsky", "Choiniere", "Coleman", "Paredes", "Apelberg", "PLoS")
