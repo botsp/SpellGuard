@@ -98,7 +98,8 @@ ui <- fluidPage(
       )
     ),
     mainPanel(
-      DT::dataTableOutput("preview_dt")
+      DT::dataTableOutput("preview_dt"),
+      textOutput("no_error_reminder")
     )
   )
 )
@@ -116,7 +117,7 @@ server <- function(input, output, session) {
   
   # SDTM metafile
   sdtmmeta_vocab <- c("Req","CRFs","gabapentin","datetime", "codelists", "Trtmnt", "Sublineage", "sublineage", "sublineages", "timeframe","explant","biomarker","Aminotransferase","contig","https","www","Acetylsalicylic","AUCs","Mitogen","immunoassays","Safranin","Propidium","phorbol","myristate","concanavalin","Ionomycin","AEs")
-
+  
   # ADaM metafile
   adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper")
   
@@ -125,7 +126,7 @@ server <- function(input, output, session) {
   
   # Takeda ADaM metafile  
   takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary", "Cleveland", "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "Karolinska", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug","Mutliracial","Eval","Hy's","CQs")
-
+  
   sheets_rv <- reactiveVal(NULL)
   results_list_rv <- reactiveVal(NULL)
   
@@ -133,7 +134,7 @@ server <- function(input, output, session) {
     file_path <- input$file$datapath
     sheets <- getSheetNames(file_path)
     sheets_rv(sheets)
-
+    
     # Combine internal and user-provided whitelists
     user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
@@ -172,14 +173,14 @@ server <- function(input, output, session) {
       results_list_rv(res_list)
     })
   })
-
+  
   output$sheet_selector <- renderUI({
     req(sheets_rv())
     sheets <- sheets_rv()
     choices <- c("(All Sheets)", sheets)
     selectInput("sheet_selected", "Filter by sheet:", choices = choices, selected = choices[1])
   })
-
+  
   filtered_sheet <- reactive({
     reslist <- results_list_rv()
     if (is.null(reslist) || is.null(input$sheet_selected)) return(data.frame())
@@ -196,7 +197,17 @@ server <- function(input, output, session) {
   
   output$preview_dt <- DT::renderDataTable({
     filtered_sheet()
-  }, options = list(pageLength = 10))
+  }, options = list(pageLength = 15))
+  output$no_error_reminder <- renderText({
+    df <- filtered_sheet()
+    if (nrow(df) > 0) return("")
+    if (!is.null(input$sheet_selected) && input$sheet_selected == "(All Sheets)") {
+      return("No misspelled words found in any sheet.")
+    } else if (!is.null(input$sheet_selected) && input$sheet_selected != "") {
+      return(paste0("No misspelled words found in this sheet: ", input$sheet_selected))
+    }
+    ""
+  })  
   
   output$download <- downloadHandler(
     filename = function() {"spell_check_results.xlsx"},
