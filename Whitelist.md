@@ -40,7 +40,7 @@ https://library.cdisc.org/browser/#/mdr/sdtmig/3-4/classes/GeneralObservations
 ## 4. ADaM metafile
 https://library.cdisc.org/browser/#/mdr/adam/adamig-1-3/datastructures/ADSL/variablesets/Identifier
 
-e.g. `Imput` and `Discont` are allowed abbreviations in variable labels but are also commonly used in text descriptions. They were not pre-excluded to avoid missing these abbreviations in contexts where they are not permitted.
+e.g. `Imput` and `Discont` are allowed abbreviations in variable labels but are also commonly used in text descriptions. They were not pre-excluded to avoid missing checks these abbreviations in contexts where they are not permitted.
 ````
 adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper")
 ````
@@ -53,8 +53,7 @@ takeda_sdtmmeta_vocab <- c("SuppQUAL", "wearables", "PopPK", "analytes", "eDT", 
 
 ## 6. Specified adam metafile
 ````
-takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary", "Cleveland", "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "Karolinska", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug"
-)
+takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary", "Cleveland", "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "Karolinska", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug","Mutliracial","Eval","Hy's","CQs")
 ````
 
 
