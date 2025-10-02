@@ -1,6 +1,7 @@
-  # Hard-coded internal vocabulary whitelist (auto-included)
-  project_vocab <- c("Takeda", "ADaM", "aCRF", "Num", "Codelist", "TypeODM","Timepoint")
-
+# Hard-coded internal vocabulary whitelist (auto-included)
+````
+project_vocab <- c("Takeda", "ADaM", "aCRF", "Num", "Codelist", "TypeODM","Timepoint")
+````
 
 ## 1. SDTM CT list
 ````
@@ -28,8 +29,9 @@ print(sdtmct_vocab)
 ````
 
 ## 2. ADam CT list
+````
 adamct_vocab <- c("ADaMIG","subscores","Vugrin", "Rostron", "Verzi", "Brodsky", "Choiniere", "Coleman", "Paredes", "Apelberg", "PLoS")
-
+````
 ## 3. SDTM metafile
 https://library.cdisc.org/browser/#/mdr/sdtmig/3-4/classes/GeneralObservations
 ````
@@ -37,3 +39,8 @@ https://library.cdisc.org/browser/#/mdr/sdtmig/3-4/classes/GeneralObservations
 ````
 ## 4. ADaM metafile
 https://library.cdisc.org/browser/#/mdr/adam/adamig-1-3/datastructures/ADSL/variablesets/Identifier
+
+`Imput` and `Discont` are allowed abbreviations in variable labels but are also commonly used in text descriptions. They were not pre-excluded to avoid missing these abbreviations in contexts where they are not permitted.
+````
+adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper")
+````
