@@ -29,3 +29,6 @@ print(sdtmct_vocab)
 
 ## 2. ADam CT list
 adamct_vocab <- c("ADaMIG","subscores","Vugrin", "Rostron", "Verzi", "Brodsky", "Choiniere", "Coleman", "Paredes", "Apelberg", "PLoS")
+
+## 3. SDTM metafile
+https://library.cdisc.org/browser/#/mdr/sdtmig/3-4/classes/GeneralObservations
