@@ -32,3 +32,8 @@ adamct_vocab <- c("ADaMIG","subscores","Vugrin", "Rostron", "Verzi", "Brodsky", 
 
 ## 3. SDTM metafile
 https://library.cdisc.org/browser/#/mdr/sdtmig/3-4/classes/GeneralObservations
+````
+  sdtmmeta_vocab <- c("Req","CRFs","gabapentin","datetime", "codelists", "Trtmnt", "Sublineage", "sublineage", "sublineages", "timeframe","explant","biomarker","Aminotransferase","contig","https","www","Acetylsalicylic","AUCs","Mitogen","immunoassays","Safranin","Propidium","phorbol","myristate","concanavalin","Ionomycin","AEs")
+````
+## 4. ADaM metafile
+https://library.cdisc.org/browser/#/mdr/adam/adamig-1-3/datastructures/ADSL/variablesets/Identifier
