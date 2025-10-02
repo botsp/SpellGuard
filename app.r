@@ -3,6 +3,7 @@ library(openxlsx)
 library(hunspell)
 library(DT)
 library(stringr)
+options(shiny.maxRequestSize = 100*1024^2) # 100 MB
 
 # Converts (row, col) to Excel cell address (e.g., (6,2) -> B6)
 cellLabel <- function(row, col) {
