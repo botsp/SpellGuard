@@ -1396,8 +1396,17 @@
     }
   },
   "files": {
+    "ADaMIG_v1.3.xlsx": {
+      "checksum": "0dca801f8e81f011fd0234c209d62a68"
+    },
     "app.R": {
-      "checksum": "17a4dd3b3e967dd931cf70b7392902bd"
+      "checksum": "6ddc993b691c69c25520d8b317ea24d3"
+    },
+    "sdtmct_vocab.txt": {
+      "checksum": "2ef3fae3a5eab46e6c63ca6b25899258"
+    },
+    "SDTMIG_v3.4.xlsx": {
+      "checksum": "4ae0822c160cb832d6a52fd7c4f62d98"
     }
   },
   "users": null
