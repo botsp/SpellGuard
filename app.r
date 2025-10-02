@@ -124,8 +124,8 @@ server <- function(input, output, session) {
   takeda_sdtmmeta_vocab <- c("SuppQUAL", "wearables", "PopPK", "analytes", "eDT", "Biomarkers", "cytochemical", "immunocytochemical", "SAEs", "eCRF", "eCRFs", "enterable", "California", "subcategorization", "programmatically", "Directionalities", "Extraintestinal", "Preplanned", "Clonus", "Reconsent", "Inevaluable", "Reassent")
   
   # Takeda ADaM metafile  
-  takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary", "Cleveland", "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "Karolinska", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug")
-  
+  takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary", "Cleveland", "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "Karolinska", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug","Mutliracial","Eval","Hy's","CQs")
+
   sheets_rv <- reactiveVal(NULL)
   results_list_rv <- reactiveVal(NULL)
   
