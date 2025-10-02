@@ -120,6 +120,12 @@ server <- function(input, output, session) {
   # ADaM metafile
   adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper")
   
+  # Takeda SDTM metafile  
+  takeda_sdtmmeta_vocab <- c("SuppQUAL", "wearables", "PopPK", "analytes", "eDT", "Biomarkers", "cytochemical", "immunocytochemical", "SAEs", "eCRF", "eCRFs", "enterable", "California", "subcategorization", "programmatically", "Directionalities", "Extraintestinal", "Preplanned", "Clonus", "Reconsent", "Inevaluable", "Reassent")
+  
+  # Takeda ADaM metafile  
+  takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary", "Cleveland", "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "Karolinska", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug")
+  
   sheets_rv <- reactiveVal(NULL)
   results_list_rv <- reactiveVal(NULL)
   
@@ -135,7 +141,7 @@ server <- function(input, output, session) {
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
     
     # Combine user_vocab, sdtmct_vocab, and UI user whitelist
-    whitelist <- unique(c(tolower(user_vocab), tolower(adamct_vocab), tolower(sdtmmeta_vocab),tolower(adammeta_vocab), sdtmct_vocab, user_whitelist))
+    whitelist <- unique(c(tolower(user_vocab),tolower(adamct_vocab),tolower(sdtmmeta_vocab),tolower(adammeta_vocab),tolower(takeda_sdtmmeta_vocab),tolower(takeda_adammeta_vocab), sdtmct_vocab, user_whitelist))
     
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
@@ -156,7 +162,7 @@ server <- function(input, output, session) {
     user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
     
-    whitelist <- unique(c(tolower(user_vocab), tolower(adamct_vocab), tolower(sdtmmeta_vocab),tolower(adammeta_vocab), sdtmct_vocab, user_whitelist))
+    whitelist <- unique(c(tolower(user_vocab), tolower(adamct_vocab), tolower(sdtmmeta_vocab),tolower(adammeta_vocab),tolower(takeda_sdtmmeta_vocab),tolower(takeda_adammeta_vocab), sdtmct_vocab, user_whitelist))
     
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
