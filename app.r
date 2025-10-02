@@ -133,9 +133,7 @@ server <- function(input, output, session) {
     file_path <- input$file$datapath
     sheets <- getSheetNames(file_path)
     sheets_rv(sheets)
-    if (length(sheets) > 0) {
-      updateSelectInput(session, "sheet_selected", choices = sheets, selected = sheets[[1]])
-    }
+
     # Combine internal and user-provided whitelists
     user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
@@ -174,18 +172,26 @@ server <- function(input, output, session) {
       results_list_rv(res_list)
     })
   })
-  
+
   output$sheet_selector <- renderUI({
     req(sheets_rv())
-    selectInput("sheet_selected", "Filter by sheet:", choices = sheets_rv(), selected = sheets_rv()[[1]])
+    sheets <- sheets_rv()
+    choices <- c("(All Sheets)", sheets)
+    selectInput("sheet_selected", "Filter by sheet:", choices = choices, selected = choices[1])
   })
-  
+
   filtered_sheet <- reactive({
     reslist <- results_list_rv()
     if (is.null(reslist) || is.null(input$sheet_selected)) return(data.frame())
-    cur <- reslist[[input$sheet_selected]]
-    if (is.null(cur)) return(data.frame())
-    cur
+    if (input$sheet_selected == "(All Sheets)") {
+      allresults <- do.call(rbind, Filter(Negate(is.null), reslist))
+      if (is.null(allresults)) return(data.frame())
+      return(allresults)
+    } else {
+      cur <- reslist[[input$sheet_selected]]
+      if (is.null(cur)) return(data.frame())
+      cur
+    }
   })
   
   output$preview_dt <- DT::renderDataTable({
