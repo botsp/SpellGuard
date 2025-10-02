@@ -45,12 +45,16 @@ e.g. `Imput` and `Discont` are allowed abbreviations in variable labels but are 
 adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper")
 ````
 
-## 5. Specified metafile
+## 5. Specified sdtm metafile
 ````
 takeda_sdtmmeta_vocab <- c("SuppQUAL", "wearables", "PopPK", "analytes", "eDT", "Biomarkers", "cytochemical", "immunocytochemical", "SAEs", "eCRF", "eCRFs", "enterable", "California", "subcategorization", "programmatically", "Directionalities", "Extraintestinal", "Preplanned", "Clonus", "Reconsent", "Inevaluable", "Reassent")
 ````
 
 
-
+## 6. Specified adam metafile
+````
+takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary", "Cleveland", "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "Karolinska", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug"
+)
+````
 
 
