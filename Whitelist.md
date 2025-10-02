@@ -40,7 +40,17 @@ https://library.cdisc.org/browser/#/mdr/sdtmig/3-4/classes/GeneralObservations
 ## 4. ADaM metafile
 https://library.cdisc.org/browser/#/mdr/adam/adamig-1-3/datastructures/ADSL/variablesets/Identifier
 
-`Imput` and `Discont` are allowed abbreviations in variable labels but are also commonly used in text descriptions. They were not pre-excluded to avoid missing these abbreviations in contexts where they are not permitted.
+e.g. `Imput` and `Discont` are allowed abbreviations in variable labels but are also commonly used in text descriptions. They were not pre-excluded to avoid missing these abbreviations in contexts where they are not permitted.
 ````
 adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper")
 ````
+
+## 5. Specified metafile
+````
+takeda_sdtmmeta_vocab <- c("SuppQUAL", "wearables", "PopPK", "analytes", "eDT", "Biomarkers", "cytochemical", "immunocytochemical", "SAEs", "eCRF", "eCRFs", "enterable", "California", "subcategorization", "programmatically", "Directionalities", "Extraintestinal", "Preplanned", "Clonus", "Reconsent", "Inevaluable", "Reassent")
+````
+
+
+
+
+
