@@ -105,8 +105,20 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
-  # Hard-coded internal vocabulary whitelist (auto-included)
-  project_vocab <- c("Takeda", "ADaM", "aCRF", "Num", "Codelist", "TypeODM","Timepoint")
+  # Internal/vectored whitelist
+  user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num", "Codelist", "TypeODM", "Timepoint", "Datetime")
+  
+  # External vocab from txt file (SDTM CT)
+  sdtmct_vocab <- tolower(scan("sdtmct_vocab.txt", what = character(), sep = "\n", quiet = TRUE))
+  
+  # ADaM CT
+  adamct_vocab <- c("ADaMIG","subscores","Vugrin", "Rostron", "Verzi", "Brodsky", "Choiniere", "Coleman", "Paredes", "Apelberg", "PLoS")
+  
+  # SDTM metafile
+  sdtmmeta_vocab <- c("Req","CRFs","gabapentin","datetime", "codelists", "Trtmnt", "Sublineage", "sublineage", "sublineages", "timeframe","explant","biomarker","Aminotransferase","contig","https","www","Acetylsalicylic","AUCs","Mitogen","immunoassays","Safranin","Propidium","phorbol","myristate","concanavalin","Ionomycin","AEs")
+
+  # ADaM metafile
+  adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper")
   
   sheets_rv <- reactiveVal(NULL)
   results_list_rv <- reactiveVal(NULL)
@@ -121,7 +133,10 @@ server <- function(input, output, session) {
     # Combine internal and user-provided whitelists
     user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
-    whitelist <- unique(c(tolower(project_vocab), user_whitelist))
+    
+    # Combine user_vocab, sdtmct_vocab, and UI user whitelist
+    whitelist <- unique(c(tolower(user_vocab), tolower(adamct_vocab), tolower(sdtmmeta_vocab),tolower(adammeta_vocab), sdtmct_vocab, user_whitelist))
+    
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
         setProgress(i / length(sheets), detail = paste("Processing sheet:", sheets[i]))
@@ -140,7 +155,9 @@ server <- function(input, output, session) {
     if (is.null(sheets)) return()
     user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
-    whitelist <- unique(c(tolower(project_vocab), user_whitelist))
+    
+    whitelist <- unique(c(tolower(user_vocab), tolower(adamct_vocab), tolower(sdtmmeta_vocab),tolower(adammeta_vocab), sdtmct_vocab, user_whitelist))
+    
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
         setProgress(i / length(sheets), detail = paste("Processing sheet:", sheets[i]))
