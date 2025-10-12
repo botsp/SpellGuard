@@ -131,7 +131,10 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # Internal/vectored whitelist
-  user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num","num","Biostatistics","pdf", "Codelist", "codelist", "TypeODM", "Timepoint", "timepoint", "Datetime","Dataset","dataset","datasets","Datasets","yyyymmdd","date9","time5","datetime16","xlsx","Pre","re","pre","SUPPxx")
+  user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num","num","Biostatistics","pdf", "Codelist", "codelist", "TypeODM", "Timepoint", "timepoint", "Datetime","Dataset","dataset","datasets","Datasets","yyyymmdd","date9","time5","datetime16","xlsx","Pre","re","pre","SUPPxx","Codelists")
+  
+  # study word collection
+  study_vocab<-c("Cholestasis","eDiary","eDiaries","Budesonide","Prednisolone","Aminosalicylic","Corticosteroids","Immunomodulators","Leukoencephalopathy","leukoencephalopathy","Cholaemia","Cholestatic")
   
   # External vocab from txt file (SDTM CT)
   sdtmct_vocab <- scan("sdtmct_vocab.txt", what = character(), sep = "\n", quiet = TRUE)
@@ -140,16 +143,16 @@ server <- function(input, output, session) {
   adamct_vocab <- c("ADaMIG","subscores","Vugrin", "Rostron", "Verzi", "Brodsky", "Choiniere", "Coleman", "Paredes", "Apelberg", "PLoS")
   
   # SDTM metafile
-  sdtmmeta_vocab <- c("Req","CRFs","gabapentin","datetime", "codelists", "Trtmnt", "Sublineage", "sublineage", "sublineages", "timeframe","explant","biomarker","Aminotransferase","contig","https","www","Acetylsalicylic","AUCs","Mitogen","immunoassays","Safranin","Propidium","phorbol","myristate","concanavalin","Ionomycin","AEs")
+  sdtmmeta_vocab <- c("Req","CRFs","gabapentin","datetime", "codelists", "Trtmnt", "Sublineage", "sublineage", "sublineages", "timeframe","explant","biomarker","Aminotransferase","contig","https","www","Acetylsalicylic","AUCs","Mitogen","immunoassays","Safranin","Propidium","phorbol","myristate","concanavalin","Ionomycin","AEs","laterality","Rslt","xml","Responders","Responder","responder")
   
   # ADaM metafile
-  adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper")
+  adammeta_vocab <- c("Completers","Subperiod","Trt","Strat","Verif","Subper","timepoints","subperiod","Datapoint","SubClass","AGEGRy","AGEGRyN", "RACEGRy", "RACEGRyN","TRTxxP", "TRTxxPN", "TRTxxA", "TRTxxAN","BASECATy","BASECAyN","CHGCATy", "CHGCATyN","PCHGCATy","PCHGCAyN","ANLzzFL","ANLzzFN","zz","CRITy","CRITyFL", "CRITyFN", "MCRITy",  "MCRITyML" ,"MCRITyMN")
   
   # Takeda SDTM metafile  
-  takeda_sdtmmeta_vocab <- c("SuppQUAL", "wearables", "PopPK", "analytes", "eDT", "Biomarkers", "cytochemical", "immunocytochemical", "SAEs", "eCRF", "eCRFs", "enterable", "California", "subcategorization", "programmatically", "Directionalities", "Extraintestinal", "Preplanned", "Clonus", "Reconsent", "Inevaluable", "Reassent")
+  takeda_sdtmmeta_vocab <- c("SuppQUAL", "wearables", "PopPK", "analytes", "eDT", "Biomarkers", "cytochemical", "immunocytochemical", "SAEs", "eCRF", "eCRFs", "enterable", "subcategorization", "programmatically", "Directionalities", "Extraintestinal", "Preplanned", "Clonus", "Reconsent", "Inevaluable", "Reassent","rescreen","erythropoiesis","pharmacogenomic","reactogenicity","APxx","CodeList","NullFlavor","Yyy","yyy","zzz","BEDIRn","Oth", "Docmnt","Optionality")
   
   # Takeda ADaM metafile  
-  takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary", "Cleveland", "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "Karolinska", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug","Mutliracial","Eval","Hy's","CQs")
+  takeda_adammeta_vocab <- c("xpt", "ne", "Subseq", "cardiodynamic", "TLFs", "TFLs", "cQT", "Pretreatment", "AVISITs", "ValueLevel", "Alloimmune", "Concom", "EuroQoL", "HRQoL", "Calgary",  "iDSST", "Karolinska", "thrombocytopenic", "purpura", "iTTP", "MoCA", "Pouchitis", "Willebrand", "Href", "adrg", "Uppsala","WHODrug","Mutliracial","Eval","Hy's","CQs","questionnare","AyLO","AyHI", "AyIND","ByIND","covariates","adsl","subgrouping","adbase","adcqt","adeg","adexpsum","adlb","adnca","adpp","advs","qrs","adae","adcm","addv","admh","adpr","adda","SITEGRy","SITEGRyN","REGIONy", "REGIONyN","EuDRACT", "birthdate","propcase","Propcase","unblinding","Imput","Discont","rescreened","aval","Rasch")
   
   sheets_rv <- reactiveVal(NULL)
   results_list_rv <- reactiveVal(NULL)
@@ -164,7 +167,7 @@ server <- function(input, output, session) {
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
     
     # Combine user_vocab, sdtmct_vocab, and UI user whitelist
-    whitelist <- unique(c(user_vocab,adamct_vocab,sdtmmeta_vocab,adammeta_vocab,takeda_sdtmmeta_vocab,takeda_adammeta_vocab, sdtmct_vocab, user_whitelist))
+    whitelist <- unique(c(user_vocab,adamct_vocab,sdtmmeta_vocab,adammeta_vocab,takeda_sdtmmeta_vocab,takeda_adammeta_vocab, sdtmct_vocab,study_vocab,user_whitelist))
     
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
@@ -185,7 +188,7 @@ server <- function(input, output, session) {
     user_whitelist <- unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+"))
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
     
-    whitelist <- unique(c(user_vocab, adamct_vocab, sdtmmeta_vocab,adammeta_vocab,takeda_sdtmmeta_vocab,takeda_adammeta_vocab, sdtmct_vocab, user_whitelist))
+    whitelist <- unique(c(user_vocab, adamct_vocab, sdtmmeta_vocab,adammeta_vocab,takeda_sdtmmeta_vocab,takeda_adammeta_vocab,sdtmct_vocab,study_vocab, user_whitelist))
     
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
