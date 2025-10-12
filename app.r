@@ -131,7 +131,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # Internal/vectored whitelist
-  user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num","num","Biostatistics","pdf" "Codelist", "codelist", "TypeODM", "Timepoint", "timepoint", "Datetime","Dataset","dataset","datasets","Datasets","yyyymmdd","date9","time5","datetime16","xlsx","Pre","re","pre","SUPPxx")
+  user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num","num","Biostatistics","pdf", "Codelist", "codelist", "TypeODM", "Timepoint", "timepoint", "Datetime","Dataset","dataset","datasets","Datasets","yyyymmdd","date9","time5","datetime16","xlsx","Pre","re","pre","SUPPxx")
   
   # External vocab from txt file (SDTM CT)
   sdtmct_vocab <- scan("sdtmct_vocab.txt", what = character(), sep = "\n", quiet = TRUE)
