@@ -130,7 +130,7 @@ ui <- fluidPage(
               " Git Commit:", ver$commit)
       )
     ),
-    mainPanel
+    mainPanel(
       DT::dataTableOutput("preview_dt"),
       textOutput("no_error_reminder")
     )
