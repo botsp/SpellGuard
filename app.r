@@ -5,6 +5,9 @@ library(DT)
 library(stringr)
 options(shiny.maxRequestSize = 100*1024^2) # 100 MB
 
+# Load deploy version info on mainpanel
+ver <- yaml::read_yaml("app_version.yaml")
+
 # Converts (row, col) to Excel cell address (e.g., (6,2) -> B6)
 cellLabel <- function(row, col) {
   label <- ""
@@ -122,6 +125,12 @@ ui <- fluidPage(
       )
     ),
     mainPanel(
+      tags$div(
+        style = "font-size:12px; color:#888; margin-bottom:12px;",
+        paste("App version:", ver$shinyapp_version,
+              "| Last deployed:", ver$last_deployed_at,
+              "| Commit:", ver$commit)
+      ),
       DT::dataTableOutput("preview_dt"),
       textOutput("no_error_reminder")
     )
