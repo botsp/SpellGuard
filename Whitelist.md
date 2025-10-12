@@ -3,7 +3,7 @@
 project_vocab <- c("Takeda", "ADaM", "aCRF", "Num", "Codelist", "TypeODM","Timepoint")
 ````
 
-## 1. SDTM CT list
+## 1. SDTM CT list(SDTM Terminology_20250926.xlsx)
 ````
 # Load required packages
 library(openxlsx)
@@ -30,16 +30,16 @@ writeLines(project_vocab, output_file)
 print(sdtmct_vocab)
 ````
 
-## 2. ADam CT list
+## 2. ADam CT list(ADaM Terminology_20250926.xlsx)
 ````
 adamct_vocab <- c("ADaMIG","subscores","Vugrin", "Rostron", "Verzi", "Brodsky", "Choiniere", "Coleman", "Paredes", "Apelberg", "PLoS")
 ````
-## 3. SDTM metafile
+## 3. SDTM metafile(SDTMIG_v3.4.xlsx)
 https://library.cdisc.org/browser/#/mdr/sdtmig/3-4/classes/GeneralObservations
 ````
 sdtmmeta_vocab <- c("Req","CRFs","gabapentin","datetime", "codelists", "Trtmnt", "Sublineage", "sublineage", "sublineages", "timeframe","explant","biomarker","Aminotransferase","contig","https","www","Acetylsalicylic","AUCs","Mitogen","immunoassays","Safranin","Propidium","phorbol","myristate","concanavalin","Ionomycin","AEs","laterality","Rslt","xml","Responders","Responder","responder")
 ````
-## 4. ADaM metafile
+## 4. ADaM metafile(ADaMIG_v1.3.xlsx)
 https://library.cdisc.org/browser/#/mdr/adam/adamig-1-3/datastructures/ADSL/variablesets/Identifier
 
 e.g. `Imput` and `Discont` are allowed abbreviations in variable labels but are also commonly used in text descriptions. They were not pre-excluded to avoid missing checks these abbreviations in contexts where they are not permitted.
