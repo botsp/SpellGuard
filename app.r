@@ -107,7 +107,27 @@ sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character(
 }
 
 ui <- fluidPage(
-  titlePanel("SpellGuard"),
+  tags$div(
+    style = "
+      position: fixed;
+      top: 18px;
+      right: 28px;
+      display: flex;
+      align-items: center;
+      z-index: 3000;",
+    img(
+      src = "https://raw.githubusercontent.com/botsp/SpellGuard/refs/heads/main/Note/spellguard_logo.png",
+      height = "65px",
+      style = "margin-right: 12px;"
+    ),
+    h2(
+      "つばめ、がんばって！",
+      style = "margin:0; font-size: 1.3em; font-weight: 300;"
+    )
+  ),
+  
+  h2("SpellGuard"),
+  
   sidebarLayout(
     sidebarPanel(
       fileInput("file", "Upload Excel File (.xlsx)"),
