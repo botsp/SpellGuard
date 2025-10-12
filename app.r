@@ -107,26 +107,16 @@ sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character(
 }
 
 ui <- fluidPage(
-  tags$div(
-    style = "
-      position: fixed;
-      top: 18px;
-      right: 28px;
-      display: flex;
-      align-items: center;
-      z-index: 3000;",
+  div(
+    style = "display: flex; align-items: center; margin-top: 6px; margin-bottom: 6px;",
+    h2("SpellGuard", style = "margin:0; font-size:1.4em; font-weight: 500; margin-right: auto;"),
     img(
       src = "https://raw.githubusercontent.com/botsp/SpellGuard/refs/heads/main/Note/spellguard_logo.png",
-      height = "65px",
+      height = "50px",
       style = "margin-right: 12px;"
     ),
-    h2(
-      "つばめ、がんばって！",
-      style = "margin:0; font-size: 1.3em; font-weight: 300;"
-    )
+    h2("つばめ、がんばって！", style = "margin-right: 32px; font-size:1.2em; font-weight: 300;")
   ),
-  
-  h2("SpellGuard"),
   
   sidebarLayout(
     sidebarPanel(
