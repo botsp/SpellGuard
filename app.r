@@ -22,6 +22,16 @@ is_all_upper_word <- function(word) {
   nzchar(txt) && txt == toupper(txt)
 }
 
+# Returns TRUE if the word contains only letters and all are uppercase or contain numbers
+is_all_upper_or_digit <- function(word) {
+  txt <- gsub("[^A-Za-z]", "", word)
+  has_letter <- nzchar(txt)
+  all_upper <- has_letter && txt == toupper(txt)
+  has_digit <- grepl("[0-9]", word)
+  all_upper || has_digit
+}
+
+
 # Spell check using batch+unique, returning misspelled words in original casing/form
 sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character()) {
   nrow_df <- nrow(df)
@@ -29,24 +39,36 @@ sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character(
   if (nrow_df == 0 || ncol_df == 0) return(NULL)
   cell_map <- list()
   cell_idx <- 0
-  # 1: Map each cell to list of words (both original and lower-case)
+  # 1: Map each cell to list of words (original)
   for (row in seq_len(nrow_df)) {
     for (col in seq_len(ncol_df)) {
       val <- as.character(df[row, col])
+      val = gsub("(\r|_x000D_)", "\n", val)
       if (!is.na(val) && nchar(trimws(val)) > 0 && grepl("[a-zA-Z]", val)) {
         words <- unlist(str_extract_all(val, "\\b[\\w'-]+\\b"))
-        check_words <- if (ignore_upper) words[!sapply(words, is_all_upper_word)] else words
-        keep_idx <- !tolower(check_words) %in% whitelist
+        # Split all compound words containing underscores or hyphens
+        words_exploded <- unlist(strsplit(words, "[-_]"))
+        words_exploded <- words_exploded[nzchar(words_exploded)]
+        
+        # skip hunspell if all-upper or contains number after split
+        mask_upper_or_digit <- grepl("^[A-Z]+$", words_exploded) | grepl("[0-9]", words_exploded)
+        check_words <- words_exploded[!mask_upper_or_digit]
+        check_words <- words_exploded[!mask_upper_or_digit]
+        if (ignore_upper) {
+          mask_upper_only <- grepl("^[A-Z]+$", check_words)
+          check_words <- check_words[!mask_upper_only]
+        }
+        
+        keep_idx <- !check_words %in% whitelist
         check_words <- check_words[keep_idx]
-        check_words_lower <- tolower(check_words)
+
         if (length(check_words) > 0) {
           cell_idx <- cell_idx + 1
           cell_map[[cell_idx]] <- list(
             cell = cellLabel(row, col),
             Sheet = sheet,
             OriginalText = val,
-            Words_orig = check_words,         # original-cased words
-            Words_lower = check_words_lower   # lower-case for spellcheck
+            Words_orig = check_words        # original-cased words
           )
         }
       }
@@ -54,14 +76,16 @@ sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character(
   }
   # 2: Outer unique batch spell check
   if (cell_idx == 0) return(NULL)
-  words_vec <- unique(unlist(lapply(cell_map, function(x) x$Words_lower)))
-  all_misspelled <- unique(unlist(hunspell(words_vec)))
+  words_vec <- unique(unlist(lapply(cell_map, function(x) x$Words_orig)))
+  check_res <- hunspell_check(words_vec)
+  all_misspelled <- words_vec[!check_res]
+  
   if (length(all_misspelled) == 0) return(NULL)
   # 3: For each cell, return only those misspelled words (in original spelling)
   results <- list()
   idx <- 1
   for (item in cell_map) {
-    match_idx <- which(item$Words_lower %in% all_misspelled)
+    match_idx <- which(item$Words_orig %in% all_misspelled)
     miss <- item$Words_orig[match_idx]
     if (length(miss) > 0) {
       results[[idx]] <- data.frame(
@@ -107,10 +131,10 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # Internal/vectored whitelist
-  user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num", "Codelist", "TypeODM", "Timepoint", "Datetime")
+  user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num","num","Biostatistics","pdf" "Codelist", "codelist", "TypeODM", "Timepoint", "timepoint", "Datetime","Dataset","dataset","datasets","Datasets","yyyymmdd","date9","time5","datetime16","xlsx","Pre","re","pre","SUPPxx")
   
   # External vocab from txt file (SDTM CT)
-  sdtmct_vocab <- tolower(scan("sdtmct_vocab.txt", what = character(), sep = "\n", quiet = TRUE))
+  sdtmct_vocab <- scan("sdtmct_vocab.txt", what = character(), sep = "\n", quiet = TRUE)
   
   # ADaM CT
   adamct_vocab <- c("ADaMIG","subscores","Vugrin", "Rostron", "Verzi", "Brodsky", "Choiniere", "Coleman", "Paredes", "Apelberg", "PLoS")
@@ -136,11 +160,11 @@ server <- function(input, output, session) {
     sheets_rv(sheets)
     
     # Combine internal and user-provided whitelists
-    user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
+    user_whitelist <- unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+"))
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
     
     # Combine user_vocab, sdtmct_vocab, and UI user whitelist
-    whitelist <- unique(c(tolower(user_vocab),tolower(adamct_vocab),tolower(sdtmmeta_vocab),tolower(adammeta_vocab),tolower(takeda_sdtmmeta_vocab),tolower(takeda_adammeta_vocab), sdtmct_vocab, user_whitelist))
+    whitelist <- unique(c(user_vocab,adamct_vocab,sdtmmeta_vocab,adammeta_vocab,takeda_sdtmmeta_vocab,takeda_adammeta_vocab, sdtmct_vocab, user_whitelist))
     
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
@@ -158,10 +182,10 @@ server <- function(input, output, session) {
     file_path <- input$file$datapath
     sheets <- sheets_rv()
     if (is.null(sheets)) return()
-    user_whitelist <- tolower(unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+")))
+    user_whitelist <- unlist(strsplit(input$whitelist_words, "[,;\n\r\t ]+"))
     user_whitelist <- user_whitelist[nzchar(user_whitelist)]
     
-    whitelist <- unique(c(tolower(user_vocab), tolower(adamct_vocab), tolower(sdtmmeta_vocab),tolower(adammeta_vocab),tolower(takeda_sdtmmeta_vocab),tolower(takeda_adammeta_vocab), sdtmct_vocab, user_whitelist))
+    whitelist <- unique(c(user_vocab, adamct_vocab, sdtmmeta_vocab,adammeta_vocab,takeda_sdtmmeta_vocab,takeda_adammeta_vocab, sdtmct_vocab, user_whitelist))
     
     withProgress(message = "Spell-checking all sheets...", value = 0, {
       res_list <- lapply(seq_along(sheets), function(i) {
