@@ -1,3 +1,4 @@
+# Release first version
 library(shiny)
 library(openxlsx)
 library(hunspell)
