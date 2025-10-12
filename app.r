@@ -122,23 +122,22 @@ ui <- fluidPage(
       tags$div(
         style = "font-size: 12px; color: #7d7d7d; margin-top: 10px;",
         "Note: The row number identified here starts from the first non-empty row."
-      ),
-	  tags$div(
-        style = "font-size:12px; color:#888; margin-bottom:12px;",
-        paste("Shiny.app version:", ver$shinyapp_version,
-              " Last deployed:", ver$last_deployed_at,
-              " Git Commit:", ver$commit)
       )
     ),
     mainPanel(
       DT::dataTableOutput("preview_dt"),
       textOutput("no_error_reminder")
     )
-  )
+    ),
+    tags$footer(
+      style = "font-size:12px; color:#888; margin-bottom:12px;",
+      paste("Shiny.app version:", ver$shinyapp_version,
+            " Last deployed:", ver$last_deployed_at,
+            " Git Commit:", ver$commit)
+    )
 )
 
 server <- function(input, output, session) {
-  
   # Internal/vectored whitelist
   user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num","num","Biostatistics","pdf", "Codelist", "codelist", "TypeODM", "Timepoint", "timepoint", "Datetime","Dataset","dataset","datasets","Datasets","yyyymmdd","date9","time5","datetime16","xlsx","Pre","re","pre","SUPPxx","Codelists")
   
