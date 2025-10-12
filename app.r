@@ -56,7 +56,7 @@ sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character(
         # skip hunspell if all-upper or contains number after split
         mask_upper_or_digit <- grepl("^[A-Z]+$", words_exploded) | grepl("[0-9]", words_exploded)
         check_words <- words_exploded[!mask_upper_or_digit]
-        check_words <- words_exploded[!mask_upper_or_digit]
+        
         if (ignore_upper) {
           mask_upper_only <- grepl("^[A-Z]+$", check_words)
           check_words <- check_words[!mask_upper_only]
@@ -64,7 +64,7 @@ sheet_results <- function(df, sheet, ignore_upper = TRUE, whitelist = character(
         
         keep_idx <- !check_words %in% whitelist
         check_words <- check_words[keep_idx]
-
+        
         if (length(check_words) > 0) {
           cell_idx <- cell_idx + 1
           cell_map[[cell_idx]] <- list(
@@ -129,15 +129,38 @@ ui <- fluidPage(
       textOutput("no_error_reminder")
     )
     ),
-    tags$footer(
-      style = "font-size:12px; color:#888; margin-bottom:12px;",
-      paste("Shiny.app version:", ver$shinyapp_version,
-            " Last deployed:", ver$last_deployed_at,
-            " Git Commit:", ver$commit)
+  tags$footer(
+    style = "
+    position: fixed;
+    left: 0; bottom: 0; width: 620px;
+    background: #fff;
+    font-size: 12px;
+    color: #888;
+    border-top: 1px solid #e0e0e0;
+    padding: 8px 8px 10px 16px;
+    text-align: center;
+    z-index: 1000;
+    opacity: 0.98;
+    box-shadow: none !important;
+    filter: none !important;
+    outline: none !important;
+    ",
+    HTML(
+      paste0(
+        "Shiny.app version: ", ver$shinyapp_version,
+        " &nbsp; | &nbsp; Last deployed: ", ver$last_deployed_at,
+        " &nbsp; | &nbsp; Git Commit: ", ver$commit,
+        '<br>',
+        '<a href="', ver$source_url,'" target="_blank">Source Code</a>',
+        ' &nbsp; | &nbsp; ',
+        '<a href="', ver$issues_url,'" target="_blank">Report Issues</a>'
+      )
     )
+  )
 )
 
 server <- function(input, output, session) {
+  
   # Internal/vectored whitelist
   user_vocab <- c("Takeda", "cdisc", "ADaM", "aCRF", "Num","num","Biostatistics","pdf", "Codelist", "codelist", "TypeODM", "Timepoint", "timepoint", "Datetime","Dataset","dataset","datasets","Datasets","yyyymmdd","date9","time5","datetime16","xlsx","Pre","re","pre","SUPPxx","Codelists")
   
