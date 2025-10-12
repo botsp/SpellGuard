@@ -8,7 +8,7 @@ project_vocab <- c("Takeda", "ADaM", "aCRF", "Num", "Codelist", "TypeODM","Timep
 # Load required packages
 library(openxlsx)
 library(dplyr)
-
+library(tidyr) 
 # Read the Excel file
 file_path <- "C:/Users/KS/OneDrive/desktop/pytest/spell_check_results.xlsx"
 data <- read.xlsx(file_path, sheet = 1)  # Specify sheet (e.g., 1 for first sheet)
@@ -16,7 +16,9 @@ data <- read.xlsx(file_path, sheet = 1)  # Specify sheet (e.g., 1 for first shee
 # Select distinct values from a specific column, excluding those containing a semicolon
 sdtmct_vocab <- data %>%
   select(MisspelledWords) %>%  # Replace with your column name
-  filter(!grepl(";", MisspelledWords)) %>%  # Exclude values containing ';'
+  separate_rows(MisspelledWords, sep = ";") %>% # Split 
+  mutate(MisspelledWords = trimws(MisspelledWords)) %>% 
+  filter(MisspelledWords != "") %>%
   distinct() %>%
   pull()  # Get as a vector
 
