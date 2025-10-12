@@ -120,7 +120,7 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      fileInput("file", "Upload Excel File (.xlsx)"),
+      fileInput("file", "Upload Excel File (.xlsx)", accept = c(".xlsx")),
       checkboxInput("ignore_uppercase", label = "Ignore all fully capitalized words.", value = TRUE),
       uiOutput("sheet_selector"),
       textAreaInput(
