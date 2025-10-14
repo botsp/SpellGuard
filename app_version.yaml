@@ -2,5 +2,5 @@
 shinyapp_version: "V2.0"
 last_deployed_at: "2025-10-12T16:40"
 commit: "d47cb11"
-source_url: "https://github.com/botsp/SpellGuard/blob/main/app.r"
+source_url: "https://github.com/botsp/SpellGuard/tree/main"
 issues_url: "https://github.com/botsp/SpellGuard/issues"
